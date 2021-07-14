@@ -1,0 +1,58 @@
+@startuml
+
+
+collections FileInfos
+card RuleText [
+    RuleText
+    ---
+    "abc_{#}.{x+l}"
+]
+
+node "Rename (Usecase)" as Rename {
+    card NOP [
+    ]
+
+    node ModularRuleSyntax
+
+    collections SerializedNameElement [
+        SerializedNameElement
+        ---
+        str("abc"), #(), x(+l)
+    ]
+
+    node NameElementDeserializer
+
+    collections NameElement [
+        NameElement
+        ---
+        Const("abc"), Serial(1, pad=0), Extension(lower)
+    ]
+
+    node RenameRule
+
+    node FileService
+
+    '---
+
+    ModularRuleSyntax --> SerializedNameElement
+
+    SerializedNameElement --> NameElementDeserializer
+
+    NameElementDeserializer --> NameElement
+
+    NameElement --> RenameRule
+
+    NOP ------> FileService
+    RenameRule --> FileService
+}
+
+collections "new Names" as newNames
+
+
+FileInfos --> NOP
+RuleText --> ModularRuleSyntax
+
+FileService --> newNames
+
+
+@enduml

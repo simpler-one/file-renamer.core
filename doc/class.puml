@@ -1,0 +1,115 @@
+@startuml
+
+frame domain {
+    frame core {
+        interface RenameRule {
+            ---
+            eval(file: FileInfo, i: number): str
+        }
+
+        class FileInfo {
+            path: str[]
+            isDir: bool
+            lastUpdate: Date
+            byteSize: int
+            ---
+            {static} sort(files: FileInfo[], sortKey: FilePropKey, ascending): FileInfo[]
+            ---
+            of(key: FilePropKey): any
+        }
+
+        abstract class FileService {
+            ---
+            {abstract} rename(file: FileInfo, newName: str): void
+            renameBy(file: FIleInfo, i: int, rule: RenameRule): void
+            renameAll(file: FileInfo[], newName: str[], rule: RenameRule): void
+        }
+
+        interface RenameRuleParser {
+            ---
+            parse(ruleStr: str): RenameRule
+        }
+
+        FileService .> FileInfo : ref
+        RenameRuleParser -> RenameRule : new
+    }
+
+    frame modular {
+        class ModularRenameRule implements RenameRule {
+            ---
+        }
+
+        interface NameElement {
+            ---
+            init(): void
+            eval(file: FileInfo, i: number): str
+        }
+
+        class ModularRuleParser implements RenameRuleParser {
+            ---
+        }
+
+        interface ModularRuleSyntax {
+            ---
+            parse(rule: str): SerializedNamaElement[]
+        }
+
+        interface NameElementDeserializer {
+            ---
+            deserialize(info: SerializedNamaElement): NameElement
+        }
+
+        class SerializedNameElement {
+            type: str
+            params: str[]
+            swithOptions: str[]
+            ---
+        }
+
+        ModularRuleParser "1" o-- "1" ModularRuleSyntax : call >
+        ModularRuleParser "1" o-- "1" NameElementDeserializer : call >
+        ModularRuleParser -> ModularRenameRule : new
+
+        ModularRuleSyntax --> SerializedNameElement : new
+    }
+
+    ' ---
+
+    FileService --> RenameRule : call
+
+    ModularRenameRule "1" o-- "n" NameElement : call >
+}
+
+
+frame usecase {
+    class Rename {
+        ---
+        rename()
+    }
+
+    Rename --> FileService : use
+}
+
+
+package "infrastructure (NameElement)" {
+    class NameElementDeserializerHub {
+        - deserializers: NameElementDeserializer[]
+        ---
+    }
+
+    class ModularRuleSyntaxImpl implements ModularRuleSyntax {
+        ---
+    }
+
+    class SimpleNameElement implements NameElement
+    class SimpleNameElementDeserializer implements NameElementDeserializer
+
+    '---
+
+    NameElementDeserializerHub "1" o..u.|> "\nn" NameElementDeserializer : call >
+
+    SimpleNameElementDeserializer -> SimpleNameElement : new
+}
+
+
+@enduml
